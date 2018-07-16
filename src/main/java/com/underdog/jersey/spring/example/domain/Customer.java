@@ -18,8 +18,17 @@ public class Customer {
     private long id;
     private String firstName;
     private String lastName;
+    private String phoneNumber;
 
-    public long getId() {
+    public String getPhoneNumber() {
+		return phoneNumber;
+	}
+
+	public void setPhoneNumber(String phoneNumber) {
+		this.phoneNumber = phoneNumber;
+	}
+
+	public long getId() {
         return id;
     }
 
@@ -41,5 +50,5 @@ public class Customer {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
-    }  
+    } 
 }

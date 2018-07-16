@@ -15,8 +15,10 @@ import java.util.List;
 public interface CustomerService {
     List<Customer> findAll();
     Customer findOne(Long id);
+    Customer findOneByFirstName(String fname);
     Customer save(Customer customer);
     void update(Customer customer);
     void delete(Customer customer);
+    void deleteAll();
     List<Customer> findByFirstAndLastName(String fname, String lname);
 }

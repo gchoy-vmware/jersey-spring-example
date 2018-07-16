@@ -25,7 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  *
  * @author Paul Samsotha
  */
-@Path("customers")
+@Path("contacts")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class CustomerResource {
@@ -34,7 +34,8 @@ public class CustomerResource {
     private CustomerService customerService;
 
     @GET
-    public Response getAllCustomers(@QueryParam("firstName") String firstName,
+    public Response getAllCustomers(
+    		@QueryParam("firstName") String firstName,
             @QueryParam("lastName") String lastName) {
 
         List<Customer> customers;
@@ -47,38 +48,27 @@ public class CustomerResource {
         }).build();
     }
 
+    /**
+     *  1. /api/contacts/get?name=value
+     *  Delete by first name only
+     * @param firstName
+     * @return
+     */
     @GET
-    @Path("/{id}")
-    public Response getCustomer(@PathParam("id") long id) {
-        Customer customer = customerService.findOne(id);
+    @Path("/get")
+    public Response getCustomer(@QueryParam("name") String firstName) {
+        Customer customer = customerService.findOneByFirstName(firstName);
         if (customer == null) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         return Response.ok(customer).build();
     }
 
-    @POST
-    public Response createCustomer(Customer customer, @Context UriInfo uriInfo) {
-        customer = customerService.save(customer);
-        long id = customer.getId();
-
-        URI createdUri = uriInfo.getAbsolutePathBuilder().path(Long.toString(id)).build();
-        return Response.created(createdUri).build();
-    }
-
-    @PUT
-    @Path("/{id}")
-    public Response updateCustomer(@PathParam("id") long id, Customer customer) {
-        Customer inDb = customerService.findOne(id);
-        if (inDb == null) {
-            throw new WebApplicationException(Response.Status.NOT_FOUND);
-        }
-        inDb.setFirstName(customer.getFirstName());
-        inDb.setLastName(customer.getLastName());
-        customerService.update(inDb);
-        return Response.noContent().build();
-    }
-
+    /**
+     *  2. /api/contacts/delete?name=value
+     * @param id
+     * @return
+     */
     @DELETE
     @Path("/{id}")
     public Response deleteCustomer(@PathParam("id") long id) {
@@ -87,6 +77,85 @@ public class CustomerResource {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         customerService.delete(inDb);
+        return Response.ok().build();
+    }
+    
+    /**
+     *  3. /api/contacts/put?name=value&phone=value
+     *  Last name updating is optional
+     * @param firstName
+     * @param lastName
+     * @param phoneNumber
+     * @param uriInfo
+     * @return
+     */
+    @PUT
+    @Path("/put")
+    public Response updateCustomer(
+    		@QueryParam("name") String firstName,
+    		@QueryParam("lname") String lastName,
+            @QueryParam("phone") String phoneNumber,
+            @Context UriInfo uriInfo) {
+        Customer inDb = customerService.findOneByFirstName(firstName);
+        if (inDb == null) {
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
+        }
+        // Update data
+        inDb.setLastName(lastName);
+        inDb.setPhoneNumber(phoneNumber);
+        customerService.update(inDb);
+        return Response.noContent().build();
+    }
+//    @PUT
+//    @Path("/put")
+//    public Response updateCustomer(
+//    		@PathParam("id") long id, 
+//    		Customer customer) {
+//        Customer inDb = customerService.findOne(id);
+//        if (inDb == null) {
+//            throw new WebApplicationException(Response.Status.NOT_FOUND);
+//        }
+//        inDb.setFirstName(customer.getFirstName());
+//        inDb.setLastName(customer.getLastName());
+//        customerService.update(inDb);
+//        return Response.noContent().build();
+//    }
+
+    // 4. /api/contacts/post?name=value&phone=value
+    @POST
+    @Path("/post")
+    public Response createCustomer(
+    		@QueryParam("name") String firstName,
+    		@QueryParam("lname") String lastName,
+            @QueryParam("phone") String phoneNumber,
+            @Context UriInfo uriInfo) {
+    	
+    	// Create the customer instance
+    	Customer customer = new Customer();
+    	customer.setFirstName(firstName);
+    	customer.setLastName(lastName);
+    	customer.setPhoneNumber(phoneNumber);
+    	
+        customer = customerService.save(customer);
+        long id = customer.getId();
+
+        URI createdUri = uriInfo.getAbsolutePathBuilder().path(Long.toString(id)).build();
+        return Response.created(createdUri).build();
+    }
+//    @POST
+//    public Response createCustomer(Customer customer, @Context UriInfo uriInfo) {
+//        customer = customerService.save(customer);
+//        long id = customer.getId();
+//
+//        URI createdUri = uriInfo.getAbsolutePathBuilder().path(Long.toString(id)).build();
+//        return Response.created(createdUri).build();
+//    }
+    
+    // 5. /api/contacts/reset
+    @POST
+    @Path("/reset")
+    public Response deleteAllContacts() {
+    	customerService.deleteAll();
         return Response.ok().build();
     }
 }

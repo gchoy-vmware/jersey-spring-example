@@ -28,6 +28,10 @@ public class CustomerServiceImpl implements CustomerService {
     public Customer findOne(Long id) {
         return customerRepository.findOne(id);
     }
+    
+    public Customer findOneByFirstName(String fname) {
+    	return customerRepository.findOneByFirstName(fname);
+    }
 
     @Override
     public Customer save(Customer customer) {
@@ -42,6 +46,11 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public void delete(Customer customer) {
         customerRepository.delete(customer);
+    }
+
+    @Override
+    public void deleteAll() {
+        customerRepository.deleteAllInBatch();
     }
 
     @Override
