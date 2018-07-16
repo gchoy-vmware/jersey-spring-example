@@ -33,8 +33,11 @@ public class CustomerResource {
     @Autowired
     private CustomerService customerService;
 
+    /**
+     * /api/contacts/
+     */
     @GET
-    public Response getAllCustomers(
+    public Response getAllContacts(
     		@QueryParam("firstName") String firstName,
             @QueryParam("lastName") String lastName) {
 
@@ -50,13 +53,12 @@ public class CustomerResource {
 
     /**
      *  1. /api/contacts/get?name=value
+     *  
      *  Delete by first name only
-     * @param firstName
-     * @return
      */
     @GET
     @Path("/get")
-    public Response getCustomer(@QueryParam("name") String firstName) {
+    public Response getContact(@QueryParam("name") String firstName) {
         Customer customer = customerService.findOneByFirstName(firstName);
         if (customer == null) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
@@ -66,13 +68,11 @@ public class CustomerResource {
 
     /**
      *  2. /api/contacts/delete?name=value
-     * @param id
-     * @return
      */
     @DELETE
-    @Path("/{id}")
-    public Response deleteCustomer(@PathParam("id") long id) {
-        Customer inDb = customerService.findOne(id);
+    @Path("/delete")
+    public Response deleteContact(@QueryParam("name") String firstName) {
+        Customer inDb = customerService.findOneByFirstName(firstName);
         if (inDb == null) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
@@ -82,16 +82,12 @@ public class CustomerResource {
     
     /**
      *  3. /api/contacts/put?name=value&phone=value
+     *  
      *  Last name updating is optional
-     * @param firstName
-     * @param lastName
-     * @param phoneNumber
-     * @param uriInfo
-     * @return
      */
     @PUT
     @Path("/put")
-    public Response updateCustomer(
+    public Response updateContact(
     		@QueryParam("name") String firstName,
     		@QueryParam("lname") String lastName,
             @QueryParam("phone") String phoneNumber,
@@ -106,25 +102,14 @@ public class CustomerResource {
         customerService.update(inDb);
         return Response.noContent().build();
     }
-//    @PUT
-//    @Path("/put")
-//    public Response updateCustomer(
-//    		@PathParam("id") long id, 
-//    		Customer customer) {
-//        Customer inDb = customerService.findOne(id);
-//        if (inDb == null) {
-//            throw new WebApplicationException(Response.Status.NOT_FOUND);
-//        }
-//        inDb.setFirstName(customer.getFirstName());
-//        inDb.setLastName(customer.getLastName());
-//        customerService.update(inDb);
-//        return Response.noContent().build();
-//    }
 
-    // 4. /api/contacts/post?name=value&phone=value
+    /**
+     *  4. /api/contacts/post?name=value&phone=value
+     *  
+     */
     @POST
     @Path("/post")
-    public Response createCustomer(
+    public Response createContact(
     		@QueryParam("name") String firstName,
     		@QueryParam("lname") String lastName,
             @QueryParam("phone") String phoneNumber,
@@ -142,16 +127,11 @@ public class CustomerResource {
         URI createdUri = uriInfo.getAbsolutePathBuilder().path(Long.toString(id)).build();
         return Response.created(createdUri).build();
     }
-//    @POST
-//    public Response createCustomer(Customer customer, @Context UriInfo uriInfo) {
-//        customer = customerService.save(customer);
-//        long id = customer.getId();
-//
-//        URI createdUri = uriInfo.getAbsolutePathBuilder().path(Long.toString(id)).build();
-//        return Response.created(createdUri).build();
-//    }
     
-    // 5. /api/contacts/reset
+    /**
+     *  5. /api/contacts/reset
+     *  
+     */
     @POST
     @Path("/reset")
     public Response deleteAllContacts() {
