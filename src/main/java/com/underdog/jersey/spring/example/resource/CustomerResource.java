@@ -97,8 +97,10 @@ public class CustomerResource {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
         // Update data
-        inDb.setLastName(lastName);
-        inDb.setPhoneNumber(phoneNumber);
+        if(lastName != null)
+        	inDb.setLastName(lastName);
+        if(phoneNumber != null)
+        	inDb.setPhoneNumber(phoneNumber);
         customerService.update(inDb);
         return Response.noContent().build();
     }
@@ -137,5 +139,17 @@ public class CustomerResource {
     public Response deleteAllContacts() {
     	customerService.deleteAll();
         return Response.ok().build();
+    }
+
+    /**
+     *  Bulk create contacts
+     */
+    @POST
+    @Path("/createbulk")
+    public Response createBulkContacts(List<Customer> customerList, @Context UriInfo uriInfo) {
+    	
+    	customerService.saveAll(customerList);
+        URI createdUri = uriInfo.getAbsolutePathBuilder().path(Long.toString(1)).build();
+        return Response.created(createdUri).build();
     }
 }

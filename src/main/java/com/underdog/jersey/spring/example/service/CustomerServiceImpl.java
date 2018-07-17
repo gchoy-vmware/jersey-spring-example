@@ -39,6 +39,11 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    public Iterable<Customer> saveAll(Iterable<Customer> customers) {
+        return customerRepository.save(customers);
+    }
+
+    @Override
     public void update(Customer customer) {
         customerRepository.save(customer);
     }

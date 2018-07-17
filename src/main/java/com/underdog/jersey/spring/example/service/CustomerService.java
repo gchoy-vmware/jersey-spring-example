@@ -17,6 +17,7 @@ public interface CustomerService {
     Customer findOne(Long id);
     Customer findOneByFirstName(String fname);
     Customer save(Customer customer);
+    Iterable<Customer> saveAll(Iterable<Customer> customerList);
     void update(Customer customer);
     void delete(Customer customer);
     void deleteAll();
