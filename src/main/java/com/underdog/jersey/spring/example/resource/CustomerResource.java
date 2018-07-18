@@ -21,6 +21,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import org.json.*;
+
 /**
  *
  * @author Paul Samsotha
@@ -105,13 +107,39 @@ public class CustomerResource {
         return Response.noContent().build();
     }
 
+    @PUT
+    public Response updateContactBody(
+    		String body,
+            @Context UriInfo uriInfo) {
+    	JSONObject contactJson = new JSONObject(body);
+    	String oldFirstName = contactJson.getString("oldName");
+    	String newFirstName = contactJson.getString("newName");
+    	String newPhoneNumber = contactJson.getString("phone");
+
+    	System.out.println(oldFirstName + " -> " + newFirstName);
+    	if(oldFirstName == null)
+    		throw new WebApplicationException(Response.Status.NOT_FOUND);
+        Customer inDb = customerService.findOneByFirstName(oldFirstName);
+        if (inDb == null) {
+            throw new WebApplicationException(Response.Status.NOT_FOUND);
+        }
+        // Update data
+        if(newFirstName != null)
+        	inDb.setFirstName(newFirstName);
+        if(newPhoneNumber != null)
+        	inDb.setPhoneNumber(newPhoneNumber);
+        customerService.update(inDb);
+        return Response.noContent().build();
+    }
+
+    
     /**
      *  4. /api/contacts/post?name=value&phone=value
      *  
      */
     @POST
     @Path("/post")
-    public Response createContact(
+    public Response createContactQueryParams(
     		@QueryParam("name") String firstName,
     		@QueryParam("lname") String lastName,
             @QueryParam("phone") String phoneNumber,
@@ -127,6 +155,16 @@ public class CustomerResource {
         long id = customer.getId();
 
         URI createdUri = uriInfo.getAbsolutePathBuilder().path(Long.toString(id)).build();
+        return Response.created(createdUri).build();
+    }
+
+    @POST
+    public Response createContactBody(
+    		Customer newCustomer,
+            @Context UriInfo uriInfo) {
+        Customer customer = customerService.save(newCustomer);
+        long id = customer.getId();
+        URI createdUri = uriInfo.getAbsolutePathBuilder().path(Long.toString(1)).build();
         return Response.created(createdUri).build();
     }
     
