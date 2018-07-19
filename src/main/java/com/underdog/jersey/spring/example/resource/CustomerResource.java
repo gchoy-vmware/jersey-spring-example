@@ -56,7 +56,7 @@ public class CustomerResource {
     /**
      *  1. /api/contacts/get?name=value
      *  
-     *  Delete by first name only
+     *  Get by first name only
      */
     @GET
     @Path("/get")
@@ -73,7 +73,7 @@ public class CustomerResource {
      */
     @DELETE
     @Path("/delete")
-    public Response deleteContact(@QueryParam("name") String firstName) {
+    public Response deleteContact(@QueryParam("firstName") String firstName) {
         Customer inDb = customerService.findOneByFirstName(firstName);
         if (inDb == null) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
@@ -81,17 +81,7 @@ public class CustomerResource {
         customerService.delete(inDb);
         return Response.ok().build();
     }
-    
-//    @DELETE
-//    public Response deleteContactBody(@QueryParam("name") String firstName) {
-//        Customer inDb = customerService.findOneByFirstName(firstName);
-//        if (inDb == null) {
-//            throw new WebApplicationException(Response.Status.NOT_FOUND);
-//        }
-//        customerService.delete(inDb);
-//        return Response.ok().build();
-//    }
-    
+        
     /**
      *  3. /api/contacts/put?name=value&phone=value
      *  
