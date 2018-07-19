@@ -15,7 +15,7 @@ import java.util.List;
 public interface CustomerService {
     List<Customer> findAll();
     Customer findOne(Long id);
-    Customer findOneByFirstName(String fname);
+    List<Customer> findOneByFirstName(String fname);
     Customer save(Customer customer);
     Iterable<Customer> saveAll(Iterable<Customer> customerList);
     void update(Customer customer);

@@ -29,7 +29,7 @@ public class CustomerServiceImpl implements CustomerService {
         return customerRepository.findOne(id);
     }
     
-    public Customer findOneByFirstName(String fname) {
+    public List<Customer> findOneByFirstName(String fname) {
     	return customerRepository.findOneByFirstName(fname);
     }
 

@@ -20,7 +20,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import org.springframework.beans.factory.annotation.Autowired;
-
+import org.springframework.util.StringUtils;
 import org.json.*;
 
 /**
@@ -39,6 +39,7 @@ public class CustomerResource {
      * /api/contacts/
      */
     @GET
+    @Path("/all")
     public Response getAllContacts(
     		@QueryParam("firstName") String firstName,
             @QueryParam("lastName") String lastName) {
@@ -54,117 +55,84 @@ public class CustomerResource {
     }
 
     /**
-     *  1. /api/contacts/get?name=value
+     *  1. GET /api/contacts?name="Deadbeef"
      *  
      *  Get by first name only
      */
     @GET
-    @Path("/get")
     public Response getContact(@QueryParam("name") String firstName) {
-        Customer customer = customerService.findOneByFirstName(firstName);
-        if (customer == null) {
+        List<Customer> customerList = customerService.findOneByFirstName(firstName);
+        if (customerList == null || customerList.isEmpty())
             throw new WebApplicationException(Response.Status.NOT_FOUND);
-        }
-        return Response.ok(customer).build();
+        return Response.ok(customerList.get(0)).build();
     }
 
     /**
-     *  2. /api/contacts/delete?name=value
+     *  2. DELETE /api/contacts/delete?name=value
      */
     @DELETE
     @Path("/delete")
     public Response deleteContact(@QueryParam("firstName") String firstName) {
-        Customer inDb = customerService.findOneByFirstName(firstName);
-        if (inDb == null) {
+        List<Customer> customerList = customerService.findOneByFirstName(firstName);
+        if (customerList == null || customerList.isEmpty()) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
-        customerService.delete(inDb);
+        customerService.delete(customerList.get(0));
         return Response.ok().build();
     }
         
     /**
-     *  3. /api/contacts/put?name=value&phone=value
+     *  3. PUT /api/contacts
+     *  { "oldName": "Geoff", "newName": "Foobar", "phone": "000" }
      *  
-     *  Last name updating is optional
      */
-    @PUT
-    @Path("/put")
-    public Response updateContact(
-    		@QueryParam("name") String firstName,
-    		@QueryParam("lname") String lastName,
-            @QueryParam("phone") String phoneNumber,
-            @Context UriInfo uriInfo) {
-        Customer inDb = customerService.findOneByFirstName(firstName);
-        if (inDb == null) {
-            throw new WebApplicationException(Response.Status.NOT_FOUND);
-        }
-        // Update data
-        if(lastName != null)
-        	inDb.setLastName(lastName);
-        if(phoneNumber != null)
-        	inDb.setPhoneNumber(phoneNumber);
-        customerService.update(inDb);
-        return Response.noContent().build();
-    }
-
     @PUT
     public Response updateContactBody(
     		String body,
             @Context UriInfo uriInfo) {
-    	JSONObject contactJson = new JSONObject(body);
-    	String oldFirstName = contactJson.getString("oldName");
-    	String newFirstName = contactJson.getString("newName");
-    	String newPhoneNumber = contactJson.getString("phone");
+    	String oldFirstName = null;
+    	String newFirstName = null;
+    	String newPhoneNumber = null;
 
-    	System.out.println(oldFirstName + " -> " + newFirstName);
-    	if(oldFirstName == null)
+    	try {
+        	JSONObject contactJson = new JSONObject(body);
+        	oldFirstName = contactJson.getString("oldName");
+        	newFirstName = contactJson.getString("newName");
+        	newPhoneNumber = contactJson.getString("phone");    		
+    	} catch (JSONException ex) {
+    		throw new WebApplicationException(Response.Status.BAD_REQUEST);
+    	}
+
+    	if(StringUtils.isEmpty(oldFirstName))
     		throw new WebApplicationException(Response.Status.NOT_FOUND);
-        Customer inDb = customerService.findOneByFirstName(oldFirstName);
-        if (inDb == null) {
+    	
+        List<Customer> customerList = customerService.findOneByFirstName(oldFirstName);
+        if (customerList == null || customerList.isEmpty()) {
             throw new WebApplicationException(Response.Status.NOT_FOUND);
         }
+        Customer updatingContact = customerList.get(0);
+        
         // Update data
-        if(newFirstName != null)
-        	inDb.setFirstName(newFirstName);
-        if(newPhoneNumber != null)
-        	inDb.setPhoneNumber(newPhoneNumber);
-        customerService.update(inDb);
+        if(!StringUtils.isEmpty(newFirstName))
+        	updatingContact.setFirstName(newFirstName);
+        if(!StringUtils.isEmpty(newPhoneNumber))
+        	updatingContact.setPhoneNumber(newPhoneNumber);
+        customerService.update(updatingContact);
         return Response.noContent().build();
     }
 
     
     /**
-     *  4. /api/contacts/post?name=value&phone=value
+     *  4. POST /api/contacts
+     *  { "firstName": "Geoff", "lastName": "Choy" }
      *  
      */
-    @POST
-    @Path("/post")
-    public Response createContactQueryParams(
-    		@QueryParam("name") String firstName,
-    		@QueryParam("lname") String lastName,
-            @QueryParam("phone") String phoneNumber,
-            @Context UriInfo uriInfo) {
-    	
-    	// Create the customer instance
-    	Customer customer = new Customer();
-    	customer.setFirstName(firstName);
-    	customer.setLastName(lastName);
-    	customer.setPhoneNumber(phoneNumber);
-    	
-        customer = customerService.save(customer);
-        long id = customer.getId();
-
-        URI createdUri = uriInfo.getAbsolutePathBuilder().path(Long.toString(id)).build();
-        return Response.created(createdUri).build();
-    }
-
     @POST
     public Response createContactBody(
     		Customer newCustomer,
             @Context UriInfo uriInfo) {
         Customer customer = customerService.save(newCustomer);
-        long id = customer.getId();
-        URI createdUri = uriInfo.getAbsolutePathBuilder().path(Long.toString(1)).build();
+        URI createdUri = uriInfo.getAbsolutePathBuilder().path(Long.toString(customer.getId())).build();
         return Response.created(createdUri).build();
     }
     
@@ -181,27 +149,25 @@ public class CustomerResource {
 
     @DELETE
     public Response deleteContacts(String body , @Context UriInfo uriInfo) {
-    	JSONObject contactJson = new JSONObject(body);
     	String contactToDelete = null;
     	
     	// Check valid payload 
     	try {
+        	JSONObject contactJson = new JSONObject(body);
     		contactToDelete = contactJson.getString("firstName");
     	} catch (JSONException ex) {
     		return Response.notModified().build();
     	}
-    	System.out.println("Trying to delete contact: " + contactToDelete);
     	
     	// Check either to delete all contacts or single contact
     	if(contactToDelete.equals("*")) {
     		customerService.deleteAll();
-    		System.out.println("Deleted all contacts");
     	} else {
-          Customer inDb = customerService.findOneByFirstName(contactToDelete);
-          if (inDb == null) {
+          List<Customer> contactList = customerService.findOneByFirstName(contactToDelete);
+          if (contactList == null || contactList.isEmpty()) {
               throw new WebApplicationException(Response.Status.NOT_FOUND);
           }
-          customerService.delete(inDb);
+          customerService.delete(contactList.get(0));
     	}
         return Response.ok().build();
     }
