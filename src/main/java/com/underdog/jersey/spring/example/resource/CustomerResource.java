@@ -82,6 +82,16 @@ public class CustomerResource {
         return Response.ok().build();
     }
     
+//    @DELETE
+//    public Response deleteContactBody(@QueryParam("name") String firstName) {
+//        Customer inDb = customerService.findOneByFirstName(firstName);
+//        if (inDb == null) {
+//            throw new WebApplicationException(Response.Status.NOT_FOUND);
+//        }
+//        customerService.delete(inDb);
+//        return Response.ok().build();
+//    }
+    
     /**
      *  3. /api/contacts/put?name=value&phone=value
      *  
@@ -174,8 +184,35 @@ public class CustomerResource {
      */
     @POST
     @Path("/reset")
-    public Response deleteAllContacts() {
+    public Response resetContacts() {
     	customerService.deleteAll();
+        return Response.ok().build();
+    }
+
+    @DELETE
+    public Response deleteContacts(String body , @Context UriInfo uriInfo) {
+    	JSONObject contactJson = new JSONObject(body);
+    	String contactToDelete = null;
+    	
+    	// Check valid payload 
+    	try {
+    		contactToDelete = contactJson.getString("firstName");
+    	} catch (JSONException ex) {
+    		return Response.notModified().build();
+    	}
+    	System.out.println("Trying to delete contact: " + contactToDelete);
+    	
+    	// Check either to delete all contacts or single contact
+    	if(contactToDelete.equals("*")) {
+    		customerService.deleteAll();
+    		System.out.println("Deleted all contacts");
+    	} else {
+          Customer inDb = customerService.findOneByFirstName(contactToDelete);
+          if (inDb == null) {
+              throw new WebApplicationException(Response.Status.NOT_FOUND);
+          }
+          customerService.delete(inDb);
+    	}
         return Response.ok().build();
     }
 
